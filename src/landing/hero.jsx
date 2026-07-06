@@ -9,6 +9,25 @@ const FRAME_COUNT = 100;
 const framePath = (i) =>
   `${import.meta.env.BASE_URL}frames/hero/frame_${String(i + 1).padStart(4, "0")}.jpg`;
 
+/** Horizontal focal point for cover crop — heart sits on the right of the plate. */
+function getHeroFocalX(viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024) {
+  if (viewportWidth < 640) return 0.94
+  if (viewportWidth < 768) return 0.86
+  return 0.7
+}
+
+function coverDrawRect(img, cw, ch, focalX = 0.7, focalY = 0.5) {
+  const scale = Math.max(cw / img.width, ch / img.height)
+  const w = img.width * scale
+  const h = img.height * scale
+  return {
+    x: focalX * (cw - w),
+    y: focalY * (ch - h),
+    w,
+    h,
+  }
+}
+
 /**
  * Tier-1 mechanic (wow-catalog A1): the visitor's scroll plays a generated
  * film of the glass heart coming alive. The section is pinned with
@@ -60,11 +79,10 @@ export function LandingHero() {
         if (!img) return;
         const cw = canvas.width;
         const ch = canvas.height;
-        const scale = Math.max(cw / img.width, ch / img.height);
-        const w = img.width * scale;
-        const h = img.height * scale;
+        const focalX = getHeroFocalX(window.innerWidth);
+        const { x, y, w, h } = coverDrawRect(img, cw, ch, focalX, 0.5);
         ctx.clearRect(0, 0, cw, ch);
-        ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
+        ctx.drawImage(img, x, y, w, h);
       };
 
       const resize = () => {
@@ -226,7 +244,7 @@ export function LandingHero() {
       <img
         src={assetUrl('assets/hero-heart.png')}
         alt="Glazen anatomisch hart met een lichtgevende cyaan kern"
-        className="absolute inset-0 h-full w-full object-cover object-[70%_center]"
+        className="absolute inset-0 h-full w-full object-cover object-[94%_center] sm:object-[86%_center] md:object-[70%_center]"
         fetchPriority="high"
         onError={(e) => {
           e.currentTarget.style.display = 'none'
@@ -239,23 +257,23 @@ export function LandingHero() {
       />
 
       {/* Text block, bottom-left over the plate */}
-      <div className="relative mx-auto flex h-full max-w-[1400px] flex-col justify-end px-6 pb-16 lg:px-10 lg:pb-20">
+      <div className="relative mx-auto flex h-full max-w-[1400px] flex-col justify-end px-5 pb-12 sm:px-6 sm:pb-16 lg:px-10 lg:pb-20">
         <div className="max-w-xl">
           <p className="sm-anno text-pulsedeep">Nieuw curriculum · Geneeskunde</p>
-          <h1 className="mt-4 whitespace-nowrap text-[clamp(3.25rem,8.5vw,6.75rem)] font-black leading-none tracking-tighter text-ink">
+          <h1 className="mt-3 sm:mt-4 text-[clamp(2.5rem,11vw,6.75rem)] font-black leading-[0.95] tracking-tighter text-ink sm:whitespace-nowrap sm:leading-none">
             Study Smarter
           </h1>
-          <p className="mt-5 max-w-md text-base leading-relaxed text-inkmuted md:text-lg">
+          <p className="mt-4 max-w-[18rem] text-sm leading-relaxed text-inkmuted sm:mt-5 sm:max-w-md sm:text-base md:text-lg">
             Samenvattingen, oefenvragen en tentamens die aansluiten op jouw blok.
             Alles op één plek.
           </p>
 
-          <div className="mt-9 flex flex-wrap items-center gap-x-10 gap-y-5">
+          <div className="mt-7 flex flex-wrap items-center gap-x-8 gap-y-4 sm:mt-9 sm:gap-x-10 sm:gap-y-5">
             {/* CTA garment 2: oversized text link, ECG-waveform underline, magnetic */}
             <Link
               ref={primaryRef}
               to={getStarted}
-              className="group relative inline-block text-2xl font-bold text-ink will-change-transform md:text-3xl"
+              className="group relative inline-block text-xl font-bold text-ink will-change-transform sm:text-2xl md:text-3xl"
             >
               Aan de slag
               <svg
