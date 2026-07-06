@@ -1,0 +1,792 @@
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
+import { Send, Bot, User, Loader2, ChevronDown, Trash2, MessageSquare, Menu, GraduationCap } from 'lucide-react'
+import Navbar from '../components/Navbar'
+import { assetUrl } from '../utils/landingLinks'
+import { usePageReveal } from '../hooks/usePageReveal'
+import lmeIndex, { lmeMap } from '../data/lmeIndex'
+import { getSummaryNameForLmeId } from '../utils/practiceExamAi'
+import { useAuth } from '../context/AuthContext'
+import {
+  getProgressUserId,
+  getChatStorageKey,
+  migrateLegacyChatToScopedGuest,
+} from '../utils/accountProgressStorage'
+
+const SIDEBAR_HIDDEN = true // Sidebar verborgen voor nu
+const INITIAL_MESSAGE = { role: 'assistant', content: 'Hoi! Ik ben Smartium AI. Stel me een vraag over de leerstof en ik geef je een kort antwoord met verwijzing naar de relevante samenvatting.' }
+
+function loadChatsForKey(storageKey) {
+  if (!storageKey) return []
+  try {
+    const raw = localStorage.getItem(storageKey)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function saveChatsForKey(storageKey, chats) {
+  if (!storageKey) return
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(chats))
+  } catch (e) {
+    console.warn('Chat opslaan mislukt:', e)
+  }
+}
+
+function generateId() {
+  return 'chat-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9)
+}
+
+function getChatTitle(messages) {
+  const firstUser = messages.find(m => m.role === 'user')
+  if (!firstUser) return 'Nieuwe chat'
+  const text = firstUser.content.slice(0, 50)
+  return text.length < firstUser.content.length ? text + '…' : text
+}
+
+const LME_LIST = lmeIndex.map(l => `- ${l.name} (id: ${l.id}) [${l.blok}, ${l.week}, ${l.casus}] – Onderwerpen: ${l.topics}`).join('\n')
+
+const getSystemPrompt = (answerMode, practiceContext) => {
+  const lengthRule = answerMode === 'short'
+    ? '1. Geef KORTE, directe antwoorden (max 3-4 zinnen per punt). Wees beknopt en to-the-point.'
+    : '1. Geef UITGEBREIDE antwoorden met meer uitleg, context en voorbeelden waar relevant.'
+  let base = `Je bent Smartium AI, een slimme studieassistent voor geneeskundestudenten. Je hebt toegang tot de volgende samenvattingen (LME's) uit het curriculum:
+
+${LME_LIST}
+
+REGELS:
+${lengthRule}
+2. Als het antwoord gebaseerd is op stof uit een LME, verwijs er ALTIJD naar met exact dit formaat: [[lme-id|LME Naam]]. Bijvoorbeeld: [[embryogenese|Embryogenese Bouwplan]]
+3. Gebruik meerdere referenties als het antwoord meerdere LME's betreft.
+4. Als de vraag NIET gerelateerd is aan de beschikbare samenvattingen, geef dan een antwoord zonder referentie.
+5. Antwoord altijd in het Nederlands.
+6. Gebruik bullet points waar relevant.`
+
+  if (practiceContext) {
+    const c = practiceContext
+    const optLines = (c.options || []).map((o) => `${o.letter}) ${o.text}`).join('\n')
+    const primaryHint = c.summaryLmeId
+      ? `De oefenset hoort bij de samenvatting: ${c.summaryLmeId} (${getSummaryNameForLmeId(c.summaryLmeId)}). Verwijs in je antwoord naar [[${c.summaryLmeId}|${getSummaryNameForLmeId(c.summaryLmeId)}]] tenzij een andere LME uit de lijst duidelijk beter past.`
+      : 'Kies uit bovenstaande LME-lijst de best passende samenvatting en gebruik [[lme-id|Naam]].'
+
+    base += `
+
+=== CONTEXT: MEERKEUZE-OEFENVRAAG (dit is de feitelijke vraag + antwoorden; gebruik dit bij alle berichten in dit gesprek) ===
+Vraag: ${c.question}
+
+Antwoordopties:
+${optLines}
+
+Juiste antwoord: ${c.correctLetter} — ${c.correctText}
+Gekozen door de leerling (fout): ${c.userLetter} — ${c.userText}
+${c.category ? `Categorie/topic: ${c.category}\n` : ''}${primaryHint}
+=== EINDE OEFENCONTEXT ===
+
+Speciaal voor het EERSTE antwoord na een foute keuze: geef maximaal 2–3 zeer korte zinnen waarom het juiste antwoord klopt en wat er mis is met de gekozen optie; sluit af met de verwijzing [[lme-id|Naam]].
+Daarna: de leerling kan doorvragen; beantwoord vervolgvragen kort, helder en vriendelijk, en blijf verwijzen naar LME's waar nuttig.`
+  }
+
+  return base
+}
+
+function parseReferences(text) {
+  const refs = []
+  let displayText = ''
+  let lastIndex = 0
+  const regex = /\[\[([^|]+)\|([^\]]+)\]\]/g
+  let match
+
+  while ((match = regex.exec(text)) !== null) {
+    displayText += text.slice(lastIndex, match.index)
+    refs.push({ id: match[1], name: match[2] })
+    lastIndex = regex.lastIndex
+  }
+  displayText += text.slice(lastIndex)
+
+  return { displayText: displayText.trim(), refs }
+}
+
+const MessageBubble = ({ message }) => {
+  const isUser = message.role === 'user'
+  const { displayText, refs } = isUser
+    ? { displayText: message.content, refs: [] }
+    : parseReferences(message.content)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
+    >
+      {!isUser && (
+        <div className="w-8 h-8 rounded-xl bg-paper border border-hairline flex items-center justify-center shrink-0 mt-1">
+          <Bot className="w-4 h-4 text-pulsedeep" />
+        </div>
+      )}
+      <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+        isUser
+          ? 'bg-ink text-paper rounded-br-md'
+          : 'bg-panel border border-hairline text-ink rounded-bl-md'
+      }`}>
+        {isUser ? (
+          <div className="whitespace-pre-wrap">{displayText}</div>
+        ) : (
+          <div className="[&_p]:my-1 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-0.5 [&_li]:list-disc [&_li]:ml-4 [&_ol>li]:list-decimal [&_strong]:font-bold [&_em]:italic [&_code]:bg-slate-100 dark:[&_code]:bg-slate-700 [&_code]:px-1 [&_code]:rounded text-sm">
+            <ReactMarkdown>{displayText}</ReactMarkdown>
+          </div>
+        )}
+        {!isUser && refs.length > 0 && (
+          <div className="mt-2 pt-2 border-t border-hairline flex flex-wrap gap-x-2 gap-y-0.5">
+            {refs.map((r, i) => {
+              const lme = lmeMap[r.id]
+              const label = lme ? `${lme.week} ${lme.casus} LME: ${lme.name}` : r.name
+              return (
+                <Link
+                  key={i}
+                  to={`/summary?lme=${r.id}`}
+                  className="text-[10px] text-inkmuted hover:text-pulsedeep hover:underline"
+                >
+                  {label}
+                </Link>
+              )
+            })}
+          </div>
+        )}
+      </div>
+      {isUser && (
+        <div className="w-8 h-8 rounded-xl bg-accent-100 dark:bg-accent-500/30 flex items-center justify-center shrink-0 mt-1">
+          <User className="w-4 h-4 text-accent-600 dark:text-accent-400" />
+        </div>
+      )}
+    </motion.div>
+  )
+}
+
+const ChatPage = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { user, loading: authLoading } = useAuth()
+  const progressUserId = getProgressUserId(user, authLoading)
+  const progressUidForCloudRef = useRef('guest')
+  const chatStorageKeyRef = useRef('')
+
+  const [chats, setChats] = useState([])
+  const [currentChatId, setCurrentChatId] = useState(null)
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [answerMode, setAnswerMode] = useState('short')
+  const [answerModeOpen, setAnswerModeOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const messagesEndRef = useRef(null)
+  const inputRef = useRef(null)
+  const answerModeRef = useRef(null)
+  const lastPracticeBootstrapKey = useRef(null)
+  const lastSummaryBootstrapKey = useRef(null)
+
+  useEffect(() => {
+    if (location.pathname !== '/chat') {
+      lastPracticeBootstrapKey.current = null
+      lastSummaryBootstrapKey.current = null
+    }
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (progressUserId != null) progressUidForCloudRef.current = progressUserId
+  }, [progressUserId])
+
+  useEffect(() => {
+    if (progressUserId == null) return
+    if (progressUserId === 'guest') migrateLegacyChatToScopedGuest()
+    const key = getChatStorageKey(progressUserId)
+    chatStorageKeyRef.current = key
+    let loaded = loadChatsForKey(key)
+    const skipEmpty = Boolean(location.state?.practiceContext) || Boolean(location.state?.summaryContext)
+    if (loaded.length === 0 && !skipEmpty) {
+      const id = generateId()
+      loaded = [
+        {
+          id,
+          title: 'Nieuwe chat',
+          messages: [INITIAL_MESSAGE],
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      ]
+      saveChatsForKey(key, loaded)
+    }
+    setChats(loaded)
+    if (loaded.length > 0) {
+      const sorted = [...loaded].sort(
+        (a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt)
+      )
+      setCurrentChatId(sorted[0].id)
+    } else {
+      setCurrentChatId(null)
+    }
+  }, [progressUserId])
+
+  const saveChats = useCallback((next) => {
+    saveChatsForKey(chatStorageKeyRef.current, next)
+    import('../lib/cloudUserProgress')
+      .then((m) => m.scheduleCloudProgressSync(progressUidForCloudRef.current))
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (answerModeRef.current && !answerModeRef.current.contains(e.target)) {
+        setAnswerModeOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const currentChat = chats.find(c => c.id === currentChatId)
+  const messages = currentChat?.messages ?? [INITIAL_MESSAGE]
+
+  useEffect(() => {
+    if (!currentChatId && chats.length > 0) {
+      const sorted = [...chats].sort((a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt))
+      setCurrentChatId(sorted[0].id)
+    }
+  }, [chats.length, currentChatId])
+
+  const setMessages = useCallback((updater) => {
+    if (!currentChatId) return
+    setChats(prev => {
+      const chat = prev.find(c => c.id === currentChatId)
+      const currentMsgs = chat?.messages ?? [INITIAL_MESSAGE]
+      const next = typeof updater === 'function' ? updater(currentMsgs) : updater
+      const title = getChatTitle(next)
+      const updated = prev.some(c => c.id === currentChatId)
+        ? prev.map(c => c.id === currentChatId ? { ...c, messages: next, title, updatedAt: Date.now() } : c)
+        : [...prev, { id: currentChatId, title, messages: next, createdAt: Date.now(), updatedAt: Date.now() }]
+      saveChats(updated)
+      return updated
+    })
+  }, [currentChatId, saveChats])
+
+  const clearChat = () => {
+    if (!currentChatId) return
+    setChats((prev) => {
+      const next = prev.map((c) =>
+        c.id === currentChatId
+          ? { ...c, messages: [INITIAL_MESSAGE], practiceContext: undefined, title: 'Nieuwe chat', updatedAt: Date.now() }
+          : c
+      )
+      saveChats(next)
+      return next
+    })
+    setInput('')
+  }
+
+  const selectChat = (id) => {
+    setCurrentChatId(id)
+    setSidebarOpen(false)
+  }
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  const appendAssistantMessage = useCallback((chatId, content) => {
+    setChats(prev => {
+      const next = prev.map(c => {
+        if (c.id !== chatId) return c
+        const msgs = [...c.messages, { role: 'assistant', content }]
+        return { ...c, messages: msgs, title: getChatTitle(msgs), updatedAt: Date.now() }
+      })
+      saveChats(next)
+      return next
+    })
+  }, [saveChats])
+
+  // Vanaf oefenvragen: als initialExplanation meegegeven → chat pre-filled; anders API-bootstrap
+  useEffect(() => {
+    const ctx = location.state?.practiceContext
+    if (!ctx) return
+    if (progressUserId == null) return
+    const initialExplanation = location.state?.initialExplanation
+    const key = JSON.stringify({ ctx, hasInitial: !!initialExplanation })
+    if (lastPracticeBootstrapKey.current === key) return
+    lastPracticeBootstrapKey.current = key
+
+    navigate('/chat', { replace: true, state: null })
+
+    const id = generateId()
+    const userMessage = {
+      role: 'user',
+      content:
+        'Ik had deze oefenvraag fout. Geef een zeer korte uitleg waarom het juiste antwoord klopt en waarom mijn gekozen antwoord niet (max. 3 zinnen). Sluit af met een verwijzing naar de juiste samenvatting in het formaat [[lme-id|Naam]]. Daarna kan ik verder vragen stellen als ik iets nog niet begrijp.',
+    }
+
+    const messages = initialExplanation
+      ? [userMessage, { role: 'assistant', content: initialExplanation }]
+      : [userMessage]
+
+    setChats((prev) => {
+      const next = [
+        ...prev,
+        {
+          id,
+          title: 'Oefenvraag — AI uitleg',
+          messages,
+          practiceContext: ctx,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      ]
+      saveChats(next)
+      return next
+    })
+    setCurrentChatId(id)
+
+    if (initialExplanation) {
+      inputRef.current?.focus()
+      return
+    }
+
+    const apiBase = (import.meta.env.VITE_API_BASE_URL || 'https://smartium-openai-proxy.yellow-fog-b95b.workers.dev').replace(
+      /\/$/,
+      ''
+    )
+
+    ;(async () => {
+      setLoading(true)
+      try {
+        const firebaseIdToken = user?.getIdToken ? await user.getIdToken() : undefined
+        const apiMessages = [
+          { role: 'system', content: getSystemPrompt(answerMode, ctx) },
+          { role: 'user', content: userMessage.content },
+        ]
+        const res = await fetch(`${apiBase}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'gpt-5.4-mini',
+            messages: apiMessages,
+            temperature: 0.35,
+            max_completion_tokens: 500,
+            usageScope: 'chat',
+            uid: user?.uid,
+            email: user?.email || undefined,
+            firebaseIdToken,
+          }),
+        })
+        const data = await res.json()
+        if (data.error) {
+          appendAssistantMessage(id, `Fout: ${data.error.message}`)
+        } else {
+          const reply = data.choices?.[0]?.message?.content || 'Geen antwoord ontvangen.'
+          appendAssistantMessage(id, reply)
+        }
+      } catch {
+        appendAssistantMessage(id, 'Er ging iets mis met de verbinding. Probeer het opnieuw.')
+      } finally {
+        setLoading(false)
+        inputRef.current?.focus()
+      }
+    })()
+  }, [location.state, navigate, answerMode, appendAssistantMessage, progressUserId])
+
+  // From summary page: start a chat about summary content
+  useEffect(() => {
+    const ctx = location.state?.summaryContext
+    if (!ctx) return
+    if (progressUserId == null) return
+    const key = JSON.stringify(ctx)
+    if (lastSummaryBootstrapKey.current === key) return
+    lastSummaryBootstrapKey.current = key
+
+    navigate('/chat', { replace: true, state: null })
+
+    const id = generateId()
+    const userContent = ctx.selectedText
+      ? `Ik lees de samenvatting "${ctx.lmeName}" en begrijp het volgende stuk niet goed:\n\n"${ctx.selectedText}"\n\nKun je dit uitleggen?`
+      : `Ik heb de samenvatting "${ctx.lmeName}" gelezen maar begrijp sommige delen niet helemaal. Kun je de belangrijkste punten kort en duidelijk uitleggen?`
+    const userMessage = { role: 'user', content: userContent }
+
+    setChats((prev) => {
+      const next = [
+        ...prev,
+        {
+          id,
+          title: ctx.selectedText
+            ? `Samenvatting — ${ctx.lmeName}`
+            : `Uitleg — ${ctx.lmeName}`,
+          messages: [userMessage],
+          summaryLmeId: ctx.lmeId,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      ]
+      saveChats(next)
+      return next
+    })
+    setCurrentChatId(id)
+
+    const apiBase = (import.meta.env.VITE_API_BASE_URL || 'https://smartium-openai-proxy.yellow-fog-b95b.workers.dev').replace(
+      /\/$/,
+      ''
+    )
+
+    ;(async () => {
+      setLoading(true)
+      try {
+        const firebaseIdToken = user?.getIdToken ? await user.getIdToken() : undefined
+        const systemPrompt = getSystemPrompt(answerMode) +
+          `\n\nDe student leest de samenvatting: [[${ctx.lmeId}|${ctx.lmeName}]]. Verwijs in je antwoord altijd naar deze samenvatting. Geef een heldere, beknopte uitleg.`
+        const apiMessages = [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userContent },
+        ]
+        const res = await fetch(`${apiBase}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'gpt-5.4-mini',
+            messages: apiMessages,
+            temperature: 0.35,
+            max_completion_tokens: 800,
+            usageScope: 'chat',
+            uid: user?.uid,
+            email: user?.email || undefined,
+            firebaseIdToken,
+          }),
+        })
+        const data = await res.json()
+        if (data.error) {
+          appendAssistantMessage(id, `Fout: ${data.error.message}`)
+        } else {
+          const reply = data.choices?.[0]?.message?.content || 'Geen antwoord ontvangen.'
+          appendAssistantMessage(id, reply)
+        }
+      } catch {
+        appendAssistantMessage(id, 'Er ging iets mis met de verbinding. Probeer het opnieuw.')
+      } finally {
+        setLoading(false)
+        inputRef.current?.focus()
+      }
+    })()
+  }, [location.state, navigate, answerMode, appendAssistantMessage, progressUserId])
+
+  const sendMessage = async () => {
+    const trimmed = input.trim()
+    if (!trimmed || loading) return
+
+    const userMessage = { role: 'user', content: trimmed }
+    let targetChatId = currentChatId
+    let newMessages
+
+    if (!targetChatId) {
+      targetChatId = generateId()
+      newMessages = [INITIAL_MESSAGE, userMessage]
+      setChats(prev => {
+        const next = [...prev, {
+          id: targetChatId,
+          title: getChatTitle(newMessages),
+          messages: newMessages,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        }]
+        saveChats(next)
+        return next
+      })
+      setCurrentChatId(targetChatId)
+    } else {
+      newMessages = [...messages, userMessage]
+      setMessages(newMessages)
+    }
+
+    const practiceContext = chats.find(c => c.id === targetChatId)?.practiceContext
+
+    setInput('')
+    setLoading(true)
+
+    const apiBase = (import.meta.env.VITE_API_BASE_URL || 'https://smartium-openai-proxy.yellow-fog-b95b.workers.dev').replace(/\/$/, '')
+
+    try {
+      const firebaseIdToken = user?.getIdToken ? await user.getIdToken() : undefined
+      const apiMessages = [
+        { role: 'system', content: getSystemPrompt(answerMode, practiceContext) },
+        ...newMessages.filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content })),
+      ]
+
+      const res = await fetch(`${apiBase}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'gpt-5.4-mini',
+          messages: apiMessages,
+          temperature: 0.4,
+          max_completion_tokens: practiceContext
+            ? (answerMode === 'extended' ? 2000 : 900)
+            : (answerMode === 'extended' ? 2000 : 800),
+          usageScope: 'chat',
+          uid: user?.uid,
+          email: user?.email || undefined,
+          firebaseIdToken,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (data.error) {
+        appendAssistantMessage(targetChatId, `Fout: ${data.error.message}`)
+      } else {
+        const reply = data.choices?.[0]?.message?.content || 'Geen antwoord ontvangen.'
+        appendAssistantMessage(targetChatId, reply)
+      }
+    } catch {
+      appendAssistantMessage(targetChatId, 'Er ging iets mis met de verbinding. Probeer het opnieuw.')
+    } finally {
+      setLoading(false)
+      inputRef.current?.focus()
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage()
+    }
+  }
+
+  const pageRef = usePageReveal([currentChatId, progressUserId])
+
+  if (progressUserId == null) {
+    return (
+      <div className="shell-page min-h-screen flex flex-col transition-colors duration-300">
+        <Navbar />
+        <div className="h-[68px]" />
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 pt-8">
+          <Loader2 className="h-10 w-10 animate-spin text-pulse" strokeWidth={2} />
+          <p className="text-sm text-inkmuted">Chat laden…</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="shell-page sm-grid-paper min-h-screen flex flex-col transition-colors duration-300">
+      <Navbar />
+      <div className="h-[68px]" />
+
+      <div ref={pageRef} className="flex-1 flex min-h-0 opacity-0">
+        {!SIDEBAR_HIDDEN && (
+        <>
+        {/* Sidebar - chat history */}
+        <aside className={`shrink-0 flex flex-col border-r border-hairline bg-panel transition-all duration-200 overflow-hidden
+          ${sidebarOpen
+            ? 'w-64 md:w-64 fixed md:relative inset-y-0 left-0 z-20 md:z-auto pt-[68px] md:pt-0 shadow-xl md:shadow-none'
+            : 'w-0 md:w-0'
+          }`}
+          style={sidebarOpen ? { top: 0, bottom: 0 } : {}}
+        >
+          <div className="p-3 border-b border-hairline flex items-center justify-between min-h-[52px]">
+            <button
+              onClick={clearChat}
+              disabled={!currentChatId}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-hairline bg-paper text-ink text-sm font-medium hover:border-pulse/40 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title="Chat leegmaken"
+            >
+              <Trash2 className="w-4 h-4" />
+              Clear chat
+            </button>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="p-2 rounded-lg hover:bg-paper text-inkmuted"
+              title="Sidebar sluiten"
+            >
+              <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto py-2">
+            {chats.map((chat) => (
+              <button
+                key={chat.id}
+                onClick={() => selectChat(chat.id)}
+                className={`w-full text-left px-4 py-2.5 text-sm truncate transition-colors ${
+                  chat.id === currentChatId
+                    ? 'bg-paper text-pulsedeep border-r-2 border-pulse'
+                    : 'text-inkmuted hover:bg-paper hover:text-ink'
+                }`}
+              >
+                <MessageSquare className="w-4 h-4 inline-block mr-2 text-slate-400" />
+                {chat.title}
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/20 z-10 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+        {!sidebarOpen && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="fixed left-4 bottom-24 z-10 p-2 rounded-xl bg-panel border border-hairline shadow-md hover:border-pulse/40"
+            title="Chatgeschiedenis"
+          >
+            <Menu className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+          </button>
+        )}
+        </>
+        )}
+
+      <main className="flex-1 flex flex-col max-w-3xl mx-auto w-full px-4 min-w-0 py-4 md:py-6" data-reveal>
+        <div className="rounded-xl border border-hairline bg-panel/95 shadow-[0_12px_40px_-16px_rgba(11,34,48,0.12)] overflow-hidden flex flex-col min-h-[calc(100dvh-8.5rem)] max-h-[calc(100dvh-8.5rem)]">
+          <div className="flex items-center gap-3 border-b border-hairline px-4 py-3 bg-paper/80">
+            <img src={assetUrl('assets/smartium-logo.png')} alt="" className="h-8 w-8 object-contain" />
+            <div className="min-w-0 flex-1">
+              <p className="sm-anno text-pulsedeep">Smartium AI</p>
+              <p className="text-sm font-semibold text-ink truncate">Antwoorden uit het curriculum</p>
+            </div>
+            <button
+              onClick={clearChat}
+              disabled={!currentChatId}
+              className="flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs font-medium text-inkmuted hover:border-pulse/40 hover:text-ink disabled:opacity-50"
+              title="Chat leegmaken"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Clear
+            </button>
+          </div>
+
+          {currentChat?.practiceContext ? (
+            <div className="mx-4 mt-3 flex items-start gap-2 rounded-lg border border-pulse/25 bg-paper px-3 py-2">
+              <GraduationCap className="w-4 h-4 text-pulsedeep shrink-0 mt-0.5" />
+              <p className="text-xs text-inkmuted leading-snug">
+                Dit gesprek gaat over een <strong className="text-ink">oefenvraag</strong> die je fout had.
+              </p>
+            </div>
+          ) : null}
+
+        <div className="flex-1 overflow-y-auto space-y-4 p-4 min-h-0">
+          <AnimatePresence>
+            {messages.map((msg, i) => (
+              <MessageBubble key={`${currentChatId}-${i}-${msg.role}-${String(msg.content).slice(0, 20)}`} message={msg} />
+            ))}
+          </AnimatePresence>
+
+          {loading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex gap-3"
+            >
+              <div className="w-8 h-8 rounded-xl bg-paper border border-hairline flex items-center justify-center shrink-0">
+                <Bot className="w-4 h-4 text-pulsedeep" />
+              </div>
+              <div className="bg-panel border border-hairline rounded-2xl rounded-bl-md px-4 py-3">
+                <Loader2 className="w-5 h-5 text-pulse animate-spin" />
+              </div>
+            </motion.div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        <div className="relative z-20 shrink-0 border-t border-hairline p-3 bg-paper/80 dark:bg-slate-900/40">
+          <div className="flex items-end gap-2 bg-panel rounded-xl border border-hairline p-2">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Stel een vraag over de leerstof..."
+              rows={1}
+              className="flex-1 resize-none bg-transparent px-3 py-2 text-ink placeholder:text-inkmuted/60 focus:outline-none text-sm"
+              style={{ maxHeight: '120px' }}
+              onInput={(e) => {
+                e.target.style.height = 'auto'
+                e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'
+              }}
+            />
+            <div className="relative shrink-0" ref={answerModeRef}>
+              <button
+                type="button"
+                onClick={() => setAnswerModeOpen(o => !o)}
+                aria-expanded={answerModeOpen}
+                aria-haspopup="listbox"
+                title={answerMode === 'short' ? 'Korte antwoorden' : 'Uitgebreide antwoorden'}
+                className="flex h-10 items-center gap-1.5 rounded-xl border border-hairline bg-paper px-2.5 text-xs font-semibold text-ink hover:border-pulse/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-pulse/40 sm:px-3"
+              >
+                <span className="whitespace-nowrap">
+                  {answerMode === 'short' ? 'Kort' : 'Uitgebreid'}
+                </span>
+                <ChevronDown
+                  className={`h-3.5 w-3.5 shrink-0 text-inkmuted transition-transform ${answerModeOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+              <AnimatePresence>
+                {answerModeOpen && (
+                  <motion.div
+                    role="listbox"
+                    aria-label="Antwoordlengte"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 6 }}
+                    className="absolute bottom-full right-0 z-[100] mb-2 w-[min(100vw-2rem,240px)] overflow-hidden rounded-xl border border-hairline bg-panel py-1 shadow-[0_12px_40px_-8px_rgba(11,34,48,0.25)] ring-1 ring-black/5 dark:border-slate-600 dark:bg-slate-800 dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.45)] dark:ring-white/10"
+                  >
+                    <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-inkmuted">
+                      Antwoordlengte
+                    </p>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={answerMode === 'short'}
+                      onClick={() => { setAnswerMode('short'); setAnswerModeOpen(false) }}
+                      className={`w-full px-3 py-2.5 text-left text-sm transition-colors ${
+                        answerMode === 'short'
+                          ? 'bg-pulse/15 font-semibold text-pulsedeep dark:bg-cyan-500/20 dark:text-cyan-200'
+                          : 'text-ink hover:bg-paper dark:text-slate-100 dark:hover:bg-slate-700/80'
+                      }`}
+                    >
+                      Korte antwoorden
+                    </button>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={answerMode === 'extended'}
+                      onClick={() => { setAnswerMode('extended'); setAnswerModeOpen(false) }}
+                      className={`w-full px-3 py-2.5 text-left text-sm transition-colors ${
+                        answerMode === 'extended'
+                          ? 'bg-pulse/15 font-semibold text-pulsedeep dark:bg-cyan-500/20 dark:text-cyan-200'
+                          : 'text-ink hover:bg-paper dark:text-slate-100 dark:hover:bg-slate-700/80'
+                      }`}
+                    >
+                      Uitgebreide antwoorden
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <button
+              onClick={sendMessage}
+              disabled={!input.trim() || loading}
+              className="p-2.5 bg-ink text-paper rounded-xl hover:bg-pulsedeep disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        </div>
+      </main>
+      </div>
+    </div>
+  )
+}
+
+export default ChatPage

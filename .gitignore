@@ -1,0 +1,14 @@
+# Dependencies & build
+node_modules
+dist
+dist-ssr
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Local tooling
+.DS_Store
+*.log
+.vercel
