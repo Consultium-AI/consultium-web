@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom'
-import { assetUrl, useGetStartedPath } from '../utils/landingLinks'
+import { APP_URL, assetUrl } from '../utils/landingLinks'
 import { useEffect, useRef } from 'react'
 
 import { loadMotion } from '../lib/loadMotion'
@@ -37,7 +36,6 @@ function coverDrawRect(img, cw, ch, focalX = 0.7, focalY = 0.5) {
  * after frame 1 is decoded. Reduced motion: static image, no pin, no film.
  */
 export function LandingHero() {
-  const getStarted = useGetStartedPath()
   const sectionRef = useRef(null);
   const canvasRef = useRef(null);
   const scanRef = useRef(null);
@@ -270,9 +268,11 @@ export function LandingHero() {
 
           <div className="mt-7 flex flex-wrap items-center gap-x-8 gap-y-4 sm:mt-9 sm:gap-x-10 sm:gap-y-5">
             {/* CTA garment 2: oversized text link, ECG-waveform underline, magnetic */}
-            <Link
+            <a
               ref={primaryRef}
-              to={getStarted}
+              href={APP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="group relative inline-block text-xl font-bold text-ink will-change-transform sm:text-2xl md:text-3xl"
             >
               Aan de slag
@@ -292,7 +292,7 @@ export function LandingHero() {
                   className="transition-[stroke] duration-300 group-hover:stroke-[#0e7490]"
                 />
               </svg>
-            </Link>
+            </a>
 
             {/* CTA garment 3: viewfinder corner brackets close around the label */}
             <button

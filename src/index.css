@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import './waifu-theme.css';
-
 :root {
   --primary: #00c3ff;
   --primary-dark: #0088b8;
@@ -39,46 +37,6 @@ body {
 .dark body {
   background: linear-gradient(180deg, #0c1018 0%, #0a0d12 40%, #080b10 100%);
   color: #e8edf4;
-}
-
-mark.smartium-hl {
-  cursor: pointer;
-}
-
-::highlight(smartium-hl-yellow) {
-  background-color: rgba(250, 204, 21, 0.55);
-  color: inherit;
-}
-
-::highlight(smartium-hl-green) {
-  background-color: rgba(110, 231, 183, 0.55);
-  color: inherit;
-}
-
-::highlight(smartium-hl-pink) {
-  background-color: rgba(251, 182, 206, 0.55);
-  color: inherit;
-}
-
-::highlight(smartium-hl-blue) {
-  background-color: rgba(125, 211, 252, 0.55);
-  color: inherit;
-}
-
-.dark ::highlight(smartium-hl-yellow) {
-  background-color: rgba(250, 204, 21, 0.32);
-}
-
-.dark ::highlight(smartium-hl-green) {
-  background-color: rgba(52, 211, 153, 0.28);
-}
-
-.dark ::highlight(smartium-hl-pink) {
-  background-color: rgba(244, 114, 182, 0.28);
-}
-
-.dark ::highlight(smartium-hl-blue) {
-  background-color: rgba(56, 189, 248, 0.28);
 }
 
 /* Custom scrollbar */
@@ -343,21 +301,6 @@ mark.smartium-hl {
 .dark .hero-noise {
   opacity: 0.2;
   mix-blend-mode: soft-light;
-}
-
-/* Protected content — copy/print guard */
-@media print {
-  .protected-content {
-    display: none !important;
-  }
-  body::after {
-    content: 'Printen is niet toegestaan.';
-    display: block;
-    text-align: center;
-    padding: 4rem;
-    font-size: 1.25rem;
-    color: #64748b;
-  }
 }
 
 @keyframes gradient-shift-hero {

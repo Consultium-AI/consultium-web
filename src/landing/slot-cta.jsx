@@ -1,14 +1,11 @@
-import { Link } from 'react-router-dom'
-import { assetUrl, useGetStartedPath } from '../utils/landingLinks'
+import { APP_URL, assetUrl } from '../utils/landingLinks'
 import { useEffect, useRef } from 'react'
 import { loadMotion } from '../lib/loadMotion'
-import { scrollToTarget } from './smoothScroll'
 
 const AVATAR_IDS = [1, 3, 7, 12, 19, 24, 31]
 
 export function LandingSlotCta() {
   const pathRef = useRef(null)
-  const getStarted = useGetStartedPath()
 
   useEffect(() => {
     const path = pathRef.current
@@ -72,15 +69,17 @@ export function LandingSlotCta() {
           <p className="sm-anno text-inkmuted/80">Sluit je aan bij meer dan 250 medestudenten</p>
         </div>
       </div>
-      <Link
-        to={getStarted}
+      <a
+        href={APP_URL}
+        target="_blank"
+        rel="noopener noreferrer"
         className="group block bg-pulse py-9 text-center transition-colors duration-300 hover:bg-pulsedeep md:py-11"
       >
         <span className="inline-flex items-center justify-center gap-4 text-2xl font-black tracking-tight text-white transition-transform duration-300 group-hover:-skew-x-3 md:text-4xl">
-          Aan de slag
+          Naar de app
           <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-3">→</span>
         </span>
-      </Link>
+      </a>
     </section>
   )
 }

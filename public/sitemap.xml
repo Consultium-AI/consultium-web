@@ -6,13 +6,13 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://smartium.nl/login</loc>
-    <changefreq>weekly</changefreq>
+    <loc>https://smartium.nl/over-ons</loc>
+    <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://smartium.nl/billing</loc>
-    <changefreq>weekly</changefreq>
+    <loc>https://smartium.nl/contact</loc>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 </urlset>

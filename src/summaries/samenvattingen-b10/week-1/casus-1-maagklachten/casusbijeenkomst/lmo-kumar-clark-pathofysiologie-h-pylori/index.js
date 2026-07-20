@@ -1,1 +1,0 @@
-export { default as Blok10Week1Casus1MaagklachtenLmoKumarClarkPathofysiologieHPyloriSummary } from './Blok10Week1Casus1MaagklachtenLmoKumarClarkPathofysiologieHPyloriSummary'

@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom'
-import { assetUrl } from '../utils/landingLinks'
+import { APP_URL, assetUrl } from '../utils/landingLinks'
 import { useEffect, useRef } from 'react'
 
 import { loadMotion } from '../lib/loadMotion'
@@ -11,7 +10,6 @@ const ROWS = [
     text: 'Kernstof per casus, overzichtelijk opgebouwd met tabellen en klinische toepassingen.',
     img: assetUrl('assets/row-samenvattingen.png'),
     alt: 'Geannoteerd anatomisch hartdiagram',
-    to: '/summary',
   },
   {
     index: '02',
@@ -19,7 +17,6 @@ const ROWS = [
     text: 'Meerkeuze per onderwerp. Test je kennis gericht en zie direct wat je mist.',
     img: assetUrl('assets/row-oefenvragen.png'),
     alt: 'Waaier van studiekaarten met een cyaan vraagteken',
-    to: '/oefenvragen',
   },
   {
     index: '03',
@@ -27,7 +24,6 @@ const ROWS = [
     text: 'Casusgerichte tentamens met directe feedback en puntentelling per vraag.',
     img: assetUrl('assets/row-tentamens.png'),
     alt: 'Antwoordformulier met cyaan ingevulde cirkels',
-    to: '/tentamen',
   },
   {
     index: '04',
@@ -35,7 +31,6 @@ const ROWS = [
     text: 'Herhaal kernbegrippen per onderwerp. Vraag op de voorkant, antwoord op de achterkant — ideaal voor actief onthouden.',
     img: assetUrl('assets/row-flashcards.png'),
     alt: 'Stapel medische flashcards met kernvragen per onderwerp',
-    to: '/flashcards',
   },
 ]
 
@@ -390,8 +385,10 @@ export function LandingPlatform() {
                   className="absolute inset-x-0 bottom-0 h-px origin-left bg-hairline"
                   aria-hidden
                 />
-                <Link
-                  to={row.to}
+                <a
+                  href={APP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   data-cursor="target"
                   className="group relative grid grid-cols-[auto_1fr_auto] items-center gap-5 overflow-hidden py-7 transition-transform duration-300 ease-out md:grid-cols-[90px_1fr_minmax(0,320px)_auto] md:gap-8 md:py-9 md:hover:translate-x-2"
                 >
@@ -445,7 +442,7 @@ export function LandingPlatform() {
                   >
                     →
                   </span>
-                </Link>
+                </a>
               </li>
             ))}
           </ul>

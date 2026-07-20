@@ -1,6 +1,5 @@
-import { Link } from 'react-router-dom'
 import { Bot, ClipboardCheck, FileText, HelpCircle } from 'lucide-react'
-import { assetUrl } from '../utils/landingLinks'
+import { APP_URL, assetUrl } from '../utils/landingLinks'
 import { useEffect, useLayoutEffect, useRef } from 'react'
 
 import { loadMotion } from '../lib/loadMotion'
@@ -568,8 +567,10 @@ export function LandingPrijzen() {
                 ))}
               </ul>
 
-              <Link
-                to={"/login"}
+              <a
+                href={APP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 data-cursor="target"
                 data-prijzen-cta
                 className="group relative mt-10 block overflow-hidden rounded-sm border-2 border-ink py-4 text-center font-bold text-ink transition-shadow duration-300 hover:shadow-[0_8px_24px_-8px_rgba(11,34,48,0.25)]"
@@ -578,7 +579,7 @@ export function LandingPrijzen() {
                 <span className="relative transition-colors duration-300 group-hover:text-paper">
                   Aan de slag
                 </span>
-              </Link>
+              </a>
             </div>
           </div>
 
@@ -618,14 +619,16 @@ export function LandingPrijzen() {
                     oefenvragen en tentamens, plus een beperkt aantal AI-tokens.
                   </p>
                 </div>
-                <Link
-                  to={"/login"}
+                <a
+                  href={APP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   data-cursor="target"
                   data-prijzen-cta
                   className="sm-anno inline-flex shrink-0 items-center justify-center self-start border-[1.5px] border-ink/70 px-5 py-2.5 font-bold text-ink transition-all duration-150 hover:-rotate-1 hover:bg-ink/5 active:translate-y-[2px] active:skew-x-1 active:scale-[0.97]"
                 >
                   Gratis starten
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -662,8 +665,10 @@ export function LandingPrijzen() {
                     Volledige toegang tot alle onderdelen. Maandelijks opzegbaar.
                   </p>
                 </div>
-                <Link
-                  to={"/login"}
+                <a
+                  href={APP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   data-cursor="target"
                   data-prijzen-cta
                   className="group relative shrink-0 self-start pb-1.5 font-bold text-ink"
@@ -677,7 +682,7 @@ export function LandingPrijzen() {
                   </span>
                   <span className="absolute inset-x-0 bottom-0 h-px bg-ink/20" />
                   <span className="absolute bottom-0 left-0 h-px w-1/3 bg-pulse transition-all duration-300 group-hover:left-2/3" />
-                </Link>
+                </a>
               </div>
             </div>
 

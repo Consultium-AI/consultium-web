@@ -1,18 +1,17 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowUpRight, Instagram, Mail, MapPin, Phone } from 'lucide-react'
-import { assetUrl } from '../utils/landingLinks'
+import { APP_URL, assetUrl } from '../utils/landingLinks'
 import { scrollToTarget } from './smoothScroll'
 
 const NAV_ITEMS = [
   { label: 'Waarom Smartium', target: '#waarom' },
   { label: 'Platform', target: '#platform' },
-  { label: 'AI Chat', target: '#ai-chat' },
   { label: 'Prijzen', target: '#prijzen' },
 ]
 
-const APP_LINKS = [
-  { label: 'Samenvattingen', to: '/summary' },
-  { label: 'Prijzen', to: '/billing' },
+const PAGE_LINKS = [
+  { label: 'Over ons', to: '/over-ons' },
+  { label: 'Contact', to: '/contact' },
 ]
 
 const legalDocs = [
@@ -25,6 +24,17 @@ const footerLinkClass =
   'group inline-flex items-center gap-1.5 text-sm text-white/60 transition-colors duration-200 hover:text-pulse'
 
 export function LandingFooter() {
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const goToSection = (target) => {
+    if (location.pathname === '/') {
+      scrollToTarget(target)
+      return
+    }
+    navigate('/', { state: { scrollTo: target } })
+  }
+
   return (
     <footer className="relative z-10 overflow-hidden bg-ink text-paper">
       <div
@@ -81,20 +91,31 @@ export function LandingFooter() {
                 <li key={item.target}>
                   <button
                     type="button"
-                    onClick={() => scrollToTarget(item.target)}
+                    onClick={() => goToSection(item.target)}
                     className={footerLinkClass}
                   >
                     {item.label}
                   </button>
                 </li>
               ))}
-              {APP_LINKS.map((link) => (
+              {PAGE_LINKS.map((link) => (
                 <li key={link.to}>
                   <Link to={link.to} className={footerLinkClass}>
                     {link.label}
                   </Link>
                 </li>
               ))}
+              <li>
+                <a
+                  href={APP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={footerLinkClass}
+                >
+                  Naar de app
+                  <ArrowUpRight className="h-3.5 w-3.5 opacity-40 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={2} />
+                </a>
+              </li>
             </ul>
           </div>
 

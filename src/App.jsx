@@ -1,88 +1,27 @@
 import { useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { useAuth } from './context/AuthContext'
-import { isWaifuPremiumUser } from './utils/waifuPremiumUser'
-import AccountRoute from './components/AccountRoute'
-import WaifuSiteBackground from './components/waifu/WaifuSiteBackground'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import HomePage from './landing/HomePage'
-import PracticeQuestionsPage from './pages/PracticeQuestionsPage'
-import FlashcardsPage from './pages/FlashcardsPage'
-import SummaryPage from './pages/SummaryPage'
-import ChatPage from './pages/ChatPage'
-import ExamPage from './pages/ExamPage'
-import ExamBlokPage from './pages/ExamBlokPage'
-import LoginPage from './pages/LoginPage'
-import BillingPage from './pages/BillingPage'
-import ProfileSettingsPage from './pages/ProfileSettingsPage'
-import ContentProtectionWrapper from './components/ContentProtectionWrapper'
-import ScrollToTopRoutes from './components/ScrollToTopRoutes'
-import SubscriptionRenewalModal from './components/SubscriptionRenewalModal'
-import { RewardProvider } from './context/RewardContext'
-import CoinNotification from './components/CoinNotification'
-import FeedbackButton from './components/FeedbackButton'
+import OverOnsPage from './landing/OverOnsPage'
+import ContactPage from './landing/ContactPage'
 
-const HomePageRoute = ({ waifuMode }) => <HomePage waifuMode={waifuMode} />
-
-const getBasename = () => {
-  const baseUrl = import.meta.env.BASE_URL
-  if (window.location.hostname === 'smartium.nl' || window.location.hostname === 'www.smartium.nl') {
-    return ''
-  }
-  return baseUrl
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [pathname])
+  return null
 }
 
 function App() {
-  const { user } = useAuth()
-  const waifuMode = isWaifuPremiumUser(user)
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('waifu-premium-mode', waifuMode)
-    return () => document.documentElement.classList.remove('waifu-premium-mode')
-  }, [waifuMode])
-
   return (
-    <Router basename={getBasename()}>
-      <RewardProvider>
-        <div className={`relative min-h-screen overflow-x-hidden ${waifuMode ? 'waifu-premium-mode' : ''}`}>
-          {waifuMode ? <WaifuSiteBackground /> : null}
-
-          <div className="relative z-10">
-            <ScrollToTopRoutes />
-            <SubscriptionRenewalModal />
-            <CoinNotification />
-            <FeedbackButton />
-            <Routes>
-              <Route path="/" element={<HomePageRoute waifuMode={waifuMode} />} />
-              <Route path="/oefenvragen" element={<ContentProtectionWrapper><PracticeQuestionsPage /></ContentProtectionWrapper>} />
-              <Route path="/oefenvragen-blok3" element={<ContentProtectionWrapper><PracticeQuestionsPage forcedBlok="blok3" /></ContentProtectionWrapper>} />
-              <Route path="/oefenvragen-blok4" element={<ContentProtectionWrapper><PracticeQuestionsPage forcedBlok="blok4" /></ContentProtectionWrapper>} />
-              <Route path="/oefenvragen-blok5" element={<ContentProtectionWrapper><PracticeQuestionsPage forcedBlok="blok5" /></ContentProtectionWrapper>} />
-              <Route path="/oefenvragen-blok9" element={<ContentProtectionWrapper><PracticeQuestionsPage forcedBlok="blok9" /></ContentProtectionWrapper>} />
-              <Route path="/oefenvragen-blok10" element={<ContentProtectionWrapper><PracticeQuestionsPage forcedBlok="blok10" /></ContentProtectionWrapper>} />
-              <Route path="/summary" element={<ContentProtectionWrapper><SummaryPage /></ContentProtectionWrapper>} />
-              <Route path="/summary-blok3" element={<ContentProtectionWrapper><SummaryPage forcedBlok="blok3" /></ContentProtectionWrapper>} />
-              <Route path="/summary-blok4" element={<ContentProtectionWrapper><SummaryPage forcedBlok="blok4" /></ContentProtectionWrapper>} />
-              <Route path="/summary-blok5" element={<ContentProtectionWrapper><SummaryPage forcedBlok="blok5" /></ContentProtectionWrapper>} />
-              <Route path="/summary-blok9" element={<ContentProtectionWrapper><SummaryPage forcedBlok="blok9" /></ContentProtectionWrapper>} />
-              <Route path="/summary-blok10" element={<ContentProtectionWrapper><SummaryPage forcedBlok="blok10" /></ContentProtectionWrapper>} />
-              <Route path="/flashcards" element={<AccountRoute><ContentProtectionWrapper><FlashcardsPage /></ContentProtectionWrapper></AccountRoute>} />
-              <Route path="/flashcards-blok4" element={<AccountRoute><ContentProtectionWrapper><FlashcardsPage forcedBlok="blok4" /></ContentProtectionWrapper></AccountRoute>} />
-              <Route path="/flashcards-blok5" element={<AccountRoute><ContentProtectionWrapper><FlashcardsPage forcedBlok="blok5" /></ContentProtectionWrapper></AccountRoute>} />
-              <Route path="/flashcards-blok9" element={<AccountRoute><ContentProtectionWrapper><FlashcardsPage forcedBlok="blok9" /></ContentProtectionWrapper></AccountRoute>} />
-              <Route path="/flashcards-blok10" element={<AccountRoute><ContentProtectionWrapper><FlashcardsPage forcedBlok="blok10" /></ContentProtectionWrapper></AccountRoute>} />
-              <Route path="/chat" element={<AccountRoute><ChatPage /></AccountRoute>} />
-              <Route path="/tentamen" element={<ContentProtectionWrapper><ExamPage /></ContentProtectionWrapper>} />
-              <Route path="/tentamen-blok4" element={<ContentProtectionWrapper><ExamBlokPage blokNumber={4} /></ContentProtectionWrapper>} />
-              <Route path="/tentamen-blok5" element={<ContentProtectionWrapper><ExamBlokPage blokNumber={5} /></ContentProtectionWrapper>} />
-              <Route path="/tentamen-blok9" element={<ContentProtectionWrapper><ExamBlokPage blokNumber={9} /></ContentProtectionWrapper>} />
-              <Route path="/tentamen-blok10" element={<ContentProtectionWrapper><ExamBlokPage blokNumber={10} /></ContentProtectionWrapper>} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/billing" element={<BillingPage />} />
-              <Route path="/settings/profile" element={<ProfileSettingsPage />} />
-            </Routes>
-          </div>
-        </div>
-      </RewardProvider>
+    <Router>
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/over-ons" element={<OverOnsPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </Router>
   )
 }

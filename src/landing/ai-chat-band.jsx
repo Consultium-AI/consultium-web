@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom'
-import { assetUrl } from '../utils/landingLinks'
+import { APP_URL, assetUrl } from '../utils/landingLinks'
 import { useEffect, useRef } from "react";
 
 import { loadMotion } from "../lib/loadMotion";
@@ -496,15 +495,17 @@ export function LandingAiChatBand() {
             </li>
           </ul>
 
-          <Link
+          <a
             ref={ctaRef}
-            to={"/chat"}
+            href={APP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             data-cursor="target"
             className="sm-anno group mt-10 inline-flex items-center gap-3 border border-pulse/60 bg-panel px-5 py-3.5 text-pulsedeep transition-colors duration-300 hover:border-pulse hover:bg-pulse/5"
           >
             <span aria-hidden>&gt;_</span>
             <span data-decode>Probeer AI Chat</span>
-          </Link>
+          </a>
         </div>
 
         {/* live chat mockup */}
