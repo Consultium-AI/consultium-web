@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowUpRight, Instagram, Mail, MapPin, Phone } from 'lucide-react'
 import { APP_URL, assetUrl } from '../utils/landingLinks'
-import { scrollToTarget } from './smoothScroll'
+import { scrollPageToTop, scrollToTarget } from './smoothScroll'
 
 const NAV_ITEMS = [
   { label: 'Waarom Smartium', target: '#waarom' },
@@ -53,7 +53,7 @@ export function LandingFooter() {
       <div className="relative mx-auto max-w-[1400px] px-6 py-16 md:py-20 lg:px-10">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-12 lg:gap-16">
           <div className="md:col-span-5">
-            <Link to="/" className="group inline-flex items-center gap-3">
+            <Link to="/" onClick={scrollPageToTop} className="group inline-flex items-center gap-3">
               <img
                 src={assetUrl('assets/smartium-logo.png')}
                 alt="Smartium"
@@ -100,7 +100,7 @@ export function LandingFooter() {
               ))}
               {PAGE_LINKS.map((link) => (
                 <li key={link.to}>
-                  <Link to={link.to} className={footerLinkClass}>
+                  <Link to={link.to} onClick={scrollPageToTop} className={footerLinkClass}>
                     {link.label}
                   </Link>
                 </li>

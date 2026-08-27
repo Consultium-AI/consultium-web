@@ -523,7 +523,7 @@ export function LandingPrijzen() {
                   data-prijzen-badge
                   className="sm-anno shrink-0 rounded-full border border-pulse/40 bg-pulse/[0.08] px-3 py-1 text-pulsedeep"
                 >
-                  20% korting
+                  27% korting
                 </span>
               </div>
 
@@ -533,7 +533,7 @@ export function LandingPrijzen() {
                     data-prijzen-price
                     className="overflow-hidden text-[3.25rem] font-black leading-none tracking-tighter text-ink md:text-7xl"
                   >
-                    € 7,99
+                    € 17,50
                   </span>
                   <span
                     data-prijzen-featured-item
@@ -546,9 +546,9 @@ export function LandingPrijzen() {
                   data-prijzen-featured-item
                   className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm text-inkmuted"
                 >
-                  <span className="font-medium text-ink/80">€ 95,90 per jaar</span>
+                  <span className="font-medium text-ink/80">€ 210,00 per jaar</span>
                   <span className="text-inkmuted/50">·</span>
-                  <span className="text-inkmuted/60 line-through">€ 119,88</span>
+                  <span className="text-inkmuted/60 line-through">€ 288,00</span>
                 </p>
               </div>
 
@@ -654,7 +654,7 @@ export function LandingPrijzen() {
                       data-prijzen-price
                       className="text-4xl font-black leading-none tracking-tighter text-ink md:text-5xl"
                     >
-                      € 9,99
+                      € 24,00
                     </span>
                     <span className="text-sm font-medium text-inkmuted">/ maand</span>
                   </div>

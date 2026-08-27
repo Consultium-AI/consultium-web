@@ -7,6 +7,20 @@ export function getLenis() {
   return lenisInstance
 }
 
+/** Altijd hard naar boven — ook met Lenis actief. */
+export function scrollPageToTop() {
+  if (lenisInstance) {
+    try {
+      lenisInstance.scrollTo(0, { immediate: true, force: true })
+    } catch {
+      /* ignore */
+    }
+  }
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  document.documentElement.scrollTop = 0
+  document.body.scrollTop = 0
+}
+
 export function scrollToTarget(target) {
   if (lenisInstance) {
     lenisInstance.scrollTo(target, { offset: -72 })
@@ -26,6 +40,23 @@ export function SmoothScroll({ children }) {
       if (cancelled) return
       const lenis = new Lenis({ autoRaf: false, lerp: 0.11 })
       lenisInstance = lenis
+      try {
+        lenis.scrollTo(0, { immediate: true, force: true })
+      } catch {
+        /* ignore */
+      }
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+      // Nog eens na eerste frame — voorkomt dat je halfweg de pagina landt
+      requestAnimationFrame(() => {
+        try {
+          lenis.scrollTo(0, { immediate: true, force: true })
+        } catch {
+          /* ignore */
+        }
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+      })
       lenis.on('scroll', ScrollTrigger.update)
       const tick = (time) => lenis.raf(time * 1000)
       gsap.ticker.add(tick)

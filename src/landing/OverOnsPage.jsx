@@ -8,9 +8,9 @@ import { useLandingReveal } from './useLandingReveal'
 
 const VALUES = [
   {
-    Icon: GraduationCap,
-    title: 'Door studenten, voor studenten',
-    text: 'Smartium is gebouwd door geneeskundestudenten die zelf door het nieuwe curriculum gingen. We weten precies waar je tegenaan loopt.',
+    Icon: Sparkles,
+    title: 'Vanuit de leermodules, met AI',
+    text: 'Samenvattingen en oefenstof worden gemaakt vanuit de officiële leermodules, met AI. Zo blijft alles gekoppeld aan jouw blok en casussen.',
   },
   {
     Icon: BookOpenCheck,
@@ -18,7 +18,7 @@ const VALUES = [
     text: 'Geen eindeloze stapels documenten, maar zorgvuldig samengestelde kernstof die aansluit op jouw blok en casussen.',
   },
   {
-    Icon: Sparkles,
+    Icon: GraduationCap,
     title: 'Slim studeren',
     text: 'Samenvattingen, oefenvragen, tentamens en AI-ondersteuning versterken elkaar. Minder zoeken, meer echt leren.',
   },
@@ -31,7 +31,7 @@ const VALUES = [
 
 const STATS = [
   { value: '250+', label: 'Actieve studenten' },
-  { value: '5', label: 'Blokken gedekt' },
+  { value: '10', label: 'Blokken gedekt' },
   { value: '1000+', label: 'Oefenvragen' },
   { value: '24/7', label: 'AI-ondersteuning' },
 ]

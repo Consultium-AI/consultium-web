@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowUpRight } from 'lucide-react'
 import { APP_URL, assetUrl } from '../utils/landingLinks'
-import { scrollToTarget } from './smoothScroll'
+import { scrollPageToTop, scrollToTarget } from './smoothScroll'
 
 const SECTION_LINKS = [
   { name: 'Waarom', target: '#waarom' },
@@ -70,7 +70,7 @@ const Navbar = () => {
     <header className="fixed inset-x-0 top-0 z-50 border-b border-hairline/70 bg-paper/80 backdrop-blur-md">
       <ScrollToSectionOnArrive />
       <div className="mx-auto flex h-[68px] max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-10">
-        <Link to="/" className="flex shrink-0 items-center gap-2.5" aria-label="Smartium home">
+        <Link to="/" onClick={scrollPageToTop} className="flex shrink-0 items-center gap-2.5" aria-label="Smartium home">
           <img src={assetUrl('assets/smartium-logo.png')} alt="" className="h-8 w-8 object-contain" />
           <span className="text-lg font-black tracking-tight text-ink">Smartium</span>
         </Link>
@@ -94,6 +94,7 @@ const Navbar = () => {
             <Link
               key={item.href}
               to={item.href}
+              onClick={scrollPageToTop}
               className={`group relative pb-1 text-[13px] font-medium transition-colors ${
                 location.pathname === item.href ? 'text-ink' : 'text-inkmuted hover:text-ink'
               }`}
@@ -163,7 +164,10 @@ const Navbar = () => {
                 <Link
                   key={item.href}
                   to={item.href}
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => {
+                    setMenuOpen(false)
+                    scrollPageToTop()
+                  }}
                   className="block rounded-lg px-3 py-2.5 text-[15px] font-medium text-ink/90 transition-colors hover:bg-panel hover:text-ink"
                 >
                   {item.name}

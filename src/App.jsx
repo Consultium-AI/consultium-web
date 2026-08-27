@@ -1,14 +1,36 @@
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import HomePage from './landing/HomePage'
 import OverOnsPage from './landing/OverOnsPage'
 import ContactPage from './landing/ContactPage'
+import { scrollPageToTop } from './landing/smoothScroll'
 
 function ScrollToTop() {
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
+
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-  }, [pathname])
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    scrollPageToTop()
+  }, [pathname, search])
+
+  useEffect(() => {
+    scrollPageToTop()
+    const id = requestAnimationFrame(() => scrollPageToTop())
+    // Lenis start async; opnieuw forceren na mount
+    const t1 = window.setTimeout(scrollPageToTop, 50)
+    const t2 = window.setTimeout(scrollPageToTop, 200)
+    return () => {
+      cancelAnimationFrame(id)
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
+    }
+  }, [pathname, search])
+
   return null
 }
 
