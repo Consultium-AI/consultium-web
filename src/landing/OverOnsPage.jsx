@@ -30,7 +30,7 @@ const VALUES = [
 ]
 
 const STATS = [
-  { value: '250+', label: 'Actieve studenten' },
+  { value: '400+', label: 'Actieve studenten' },
   { value: '10', label: 'Blokken gedekt' },
   { value: '1000+', label: 'Oefenvragen' },
   { value: '24/7', label: 'AI-ondersteuning' },

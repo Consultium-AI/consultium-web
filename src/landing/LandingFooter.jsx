@@ -6,7 +6,6 @@ import { scrollPageToTop, scrollToTarget } from './smoothScroll'
 const NAV_ITEMS = [
   { label: 'Waarom Smartium', target: '#waarom' },
   { label: 'Platform', target: '#platform' },
-  { label: 'Prijzen', target: '#prijzen' },
 ]
 
 const PAGE_LINKS = [

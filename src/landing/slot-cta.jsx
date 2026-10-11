@@ -66,7 +66,7 @@ export function LandingSlotCta() {
               />
             ))}
           </div>
-          <p className="sm-anno text-inkmuted/80">Sluit je aan bij meer dan 250 medestudenten</p>
+          <p className="sm-anno text-inkmuted/80">Sluit je aan bij meer dan 400 medestudenten</p>
         </div>
       </div>
       <a

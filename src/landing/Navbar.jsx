@@ -7,7 +7,6 @@ import { scrollPageToTop, scrollToTarget } from './smoothScroll'
 const SECTION_LINKS = [
   { name: 'Waarom', target: '#waarom' },
   { name: 'Platform', target: '#platform' },
-  { name: 'Prijzen', target: '#prijzen' },
 ]
 
 const PAGE_LINKS = [
