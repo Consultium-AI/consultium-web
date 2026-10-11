@@ -92,7 +92,7 @@ export default function ContactPage() {
                 </div>
                 <p data-reveal-copy className="mt-8 max-w-md text-base leading-relaxed text-inkmuted">
                   Of het nu gaat om je account, het studiemateriaal of een suggestie voor
-                  een nieuw blok — stuur ons een bericht en we komen er snel op terug.
+                  een nieuw blok, stuur ons een bericht en we komen er snel op terug.
                 </p>
 
                 <div data-reveal-group className="mt-12 space-y-0 border-t border-hairline">

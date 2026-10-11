@@ -103,7 +103,7 @@ export default function OverOnsPage() {
                 </h2>
                 <p data-reveal-copy className="mt-6 max-w-lg text-base leading-relaxed text-inkmuted">
                   Het vernieuwde geneeskundecurriculum vraagt veel zelfstandigheid van
-                  studenten. Colleges, casussen, leerdoelen en literatuur — het aanbod is
+                  studenten. Colleges, casussen, leerdoelen en literatuur: het aanbod is
                   enorm, maar de structuur ontbreekt vaak. Wij vertalen die berg informatie
                   naar heldere samenvattingen, gerichte oefenvragen en realistische
                   tentamens, zodat jij je energie kunt steken in begrijpen in plaats van

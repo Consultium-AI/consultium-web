@@ -28,7 +28,7 @@ const ROWS = [
   {
     index: '04',
     title: 'Flashcards',
-    text: 'Herhaal kernbegrippen per onderwerp. Vraag op de voorkant, antwoord op de achterkant — ideaal voor actief onthouden.',
+    text: 'Herhaal kernbegrippen per onderwerp. Vraag op de voorkant, antwoord op de achterkant. Ideaal voor actief onthouden.',
     img: assetUrl('assets/row-flashcards.png'),
     alt: 'Stapel medische flashcards met kernvragen per onderwerp',
   },

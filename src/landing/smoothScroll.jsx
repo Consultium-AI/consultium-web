@@ -7,7 +7,7 @@ export function getLenis() {
   return lenisInstance
 }
 
-/** Altijd hard naar boven — ook met Lenis actief. */
+/** Altijd hard naar boven - ook met Lenis actief. */
 export function scrollPageToTop() {
   if (lenisInstance) {
     try {
@@ -48,7 +48,7 @@ export function SmoothScroll({ children }) {
       window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
       document.documentElement.scrollTop = 0
       document.body.scrollTop = 0
-      // Nog eens na eerste frame — voorkomt dat je halfweg de pagina landt
+      // Nog eens na eerste frame - voorkomt dat je halfweg de pagina landt
       requestAnimationFrame(() => {
         try {
           lenis.scrollTo(0, { immediate: true, force: true })

@@ -7,13 +7,13 @@ import { loadMotion } from '../lib/loadMotion'
  * en lopende tekst, clip-path reveals voor figuren en hairline rules die
  * zichzelf tekenen. Elementen worden via data-attributen gemarkeerd:
  *
- *   data-reveal-anno      — mono label, char stagger + letter-spacing easing
- *   data-reveal-headline  — kop, masked word slide
- *   data-reveal-copy      — paragraaf, masked word slide (lichter)
- *   data-reveal-rule      — horizontale hairline, scaleX 0 → 1
- *   data-reveal-figure    — figuur/kaart, clip-path wipe van links
- *   data-reveal-item      — generiek blok, fade + rise met stagger per groep
- *   data-reveal-parallax  — zachte verticale parallax over de sectiescroll
+ *   data-reveal-anno      - mono label, char stagger + letter-spacing easing
+ *   data-reveal-headline  - kop, masked word slide
+ *   data-reveal-copy      - paragraaf, masked word slide (lichter)
+ *   data-reveal-rule      - horizontale hairline, scaleX 0 → 1
+ *   data-reveal-figure    - figuur/kaart, clip-path wipe van links
+ *   data-reveal-item      - generiek blok, fade + rise met stagger per groep
+ *   data-reveal-parallax  - zachte verticale parallax over de sectiescroll
  */
 export function useLandingReveal(sectionRef) {
   useEffect(() => {

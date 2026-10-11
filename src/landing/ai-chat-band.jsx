@@ -27,7 +27,7 @@ const EXCHANGES = [
 ];
 
 /**
- * AI Chat showcase — students ask questions and get answers grounded in
+ * AI Chat showcase - students ask questions and get answers grounded in
  * Smartium's curriculum summaries. Product UI mockup only; no illustration overlays.
  *
  * Text reveals use masked word slides, char-stagger annotations, and a

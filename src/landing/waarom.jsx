@@ -22,7 +22,7 @@ const STEPS = [
 ];
 
 /**
- * Origin story — clinical timeline (Signaal → Diagnose → Behandeling) with
+ * Origin story - clinical timeline (Signaal → Diagnose → Behandeling) with
  * sticky editorial crop on the right. Matches platform / AI band typography
  * and GSAP reveal patterns.
  */
@@ -356,7 +356,7 @@ export function LandingWaarom() {
           </h2>
         </div>
         <p ref={subtitleRef} className="mt-5 max-w-lg text-inkmuted">
-          Van signaal naar structuur — het verhaal achter Smartium, in drie stappen.
+          Van signaal naar structuur: het verhaal achter Smartium, in drie stappen.
         </p>
       </div>
 

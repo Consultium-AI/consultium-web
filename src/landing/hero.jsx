@@ -8,7 +8,7 @@ const FRAME_COUNT = 100;
 const framePath = (i) =>
   `${import.meta.env.BASE_URL}frames/hero/frame_${String(i + 1).padStart(4, "0")}.jpg`;
 
-/** Horizontal focal point for cover crop — heart sits on the right of the plate. */
+/** Horizontal focal point for cover crop - heart sits on the right of the plate. */
 function getHeroFocalX(viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024) {
   if (viewportWidth < 640) return 0.94
   if (viewportWidth < 768) return 0.86

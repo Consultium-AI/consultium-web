@@ -263,7 +263,7 @@ body {
   animation: blob-slow-delayed 25s ease-in-out infinite;
 }
 
-/* Home — premium mesh + grid (used by Hero / background layers) */
+/* Home - premium mesh + grid (used by Hero / background layers) */
 .hero-mesh-light {
   background:
     radial-gradient(ellipse 90% 70% at 50% -15%, rgba(0, 195, 255, 0.22), transparent 55%),
@@ -350,7 +350,7 @@ body {
     0 24px 48px -12px rgba(0, 0, 0, 0.45);
 }
 
-/* Platform (Features) — distinct band, minimal */
+/* Platform (Features) - distinct band, minimal */
 .platform-section-bg {
   background: linear-gradient(180deg, #eceff4 0%, #f5f6f8 45%, #fafbfc 100%);
 }
@@ -380,7 +380,7 @@ body {
   contain-intrinsic-size: 1px 920px;
 }
 
-/* CTA — lichte band, scheidt van platform en footer */
+/* CTA - lichte band, scheidt van platform en footer */
 .cta-section-bg {
   background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
 }
@@ -389,7 +389,7 @@ body {
   background: linear-gradient(180deg, #0a0d12 0%, #0d1219 50%, #0a0d12 100%);
 }
 
-/* Footer — clinical paper */
+/* Footer - clinical paper */
 .footer-section-bg {
   background: #f2f7f9;
 }
@@ -445,7 +445,7 @@ body {
   color: #e8edf4;
 }
 
-/* Footer — afgestemd op platform/CTA (legacy) */
+/* Footer - afgestemd op platform/CTA (legacy) */
 .footer-section-bg {
   background: #f0f2f6;
 }
